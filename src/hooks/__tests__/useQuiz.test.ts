@@ -207,8 +207,11 @@ describe('useQuiz', () => {
       expect(result.current.state.phase).toBe('question');
     });
 
+    // Submit the correct answer so currentIndex reliably advances
+    const correctAnswer = result.current.currentImage!.type;
+
     act(() => {
-      result.current.submitAnswer('T1');
+      result.current.submitAnswer(correctAnswer);
     });
 
     await waitFor(() => {

@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { buildQueue, getNextImage, reinsertImage } from '../imageQueue';
-import type { QuizImage, SessionLength } from '../../types/quiz';
+import { buildQueue, fisherYatesShuffle, getNextImage, reinsertImage } from '../imageQueue';
+import type { QuizImage } from '../../types/quiz';
 
 describe('imageQueue', () => {
   const createMockImages = (count: number): QuizImage[] => {
@@ -11,6 +11,51 @@ describe('imageQueue', () => {
       subject: `Subject${i + 1}`,
     }));
   };
+
+  /** Create images with all T1 first, then all T2 (mimics real metadata.json) */
+  const createBlockedImages = (t1Count: number, t2Count: number): QuizImage[] => {
+    const t1 = Array.from({ length: t1Count }, (_, i) => ({
+      id: `t1-${i}`,
+      filename: `t1-${i}.jpg`,
+      type: 'T1' as const,
+      subject: `S${i}`,
+    }));
+    const t2 = Array.from({ length: t2Count }, (_, i) => ({
+      id: `t2-${i}`,
+      filename: `t2-${i}.jpg`,
+      type: 'T2' as const,
+      subject: `S${t1Count + i}`,
+    }));
+    return [...t1, ...t2];
+  };
+
+  describe('fisherYatesShuffle', () => {
+    it('should return an array of the same length', () => {
+      const arr = [1, 2, 3, 4, 5];
+      expect(fisherYatesShuffle(arr)).toHaveLength(5);
+    });
+
+    it('should not mutate the input array', () => {
+      const arr = [1, 2, 3, 4, 5];
+      const copy = [...arr];
+      fisherYatesShuffle(arr);
+      expect(arr).toEqual(copy);
+    });
+
+    it('should contain all original elements', () => {
+      const arr = [1, 2, 3, 4, 5];
+      const shuffled = fisherYatesShuffle(arr);
+      expect(shuffled.sort()).toEqual([1, 2, 3, 4, 5]);
+    });
+
+    it('should handle empty arrays', () => {
+      expect(fisherYatesShuffle([])).toEqual([]);
+    });
+
+    it('should handle single-element arrays', () => {
+      expect(fisherYatesShuffle([42])).toEqual([42]);
+    });
+  });
 
   describe('buildQueue', () => {
     it('should create QuizItems with default SM-2 values', () => {
@@ -69,7 +114,6 @@ describe('imageQueue', () => {
       const images = createMockImages(10);
       const queue = buildQueue(images, 10);
 
-      // All new items should have same priority (50)
       for (let i = 0; i < queue.length - 1; i++) {
         expect(queue[i].priority).toBeGreaterThanOrEqual(queue[i + 1].priority);
       }
@@ -80,7 +124,7 @@ describe('imageQueue', () => {
       expect(queue).toHaveLength(0);
     });
 
-    it('should preserve image type distribution', () => {
+    it('should preserve image type distribution when taking all', () => {
       const images = createMockImages(100); // 50 T1, 50 T2
       const queue = buildQueue(images, 100);
 
@@ -89,6 +133,80 @@ describe('imageQueue', () => {
 
       expect(t1Count).toBe(50);
       expect(t2Count).toBe(50);
+    });
+
+    it('should balance T1/T2 within 20% for a 50-question session from blocked input', () => {
+      // This reproduces the real metadata layout: all T1 first, then all T2
+      const images = createBlockedImages(500, 500);
+
+      // Run multiple trials to confirm the guarantee holds every time
+      for (let trial = 0; trial < 20; trial++) {
+        const queue = buildQueue(images, 50);
+        const t1 = queue.filter((item) => item.image.type === 'T1').length;
+        const t2 = queue.filter((item) => item.image.type === 'T2').length;
+
+        expect(t1 + t2).toBe(50);
+        // Each type must be at least 40% (20) and at most 60% (30)
+        expect(t1).toBeGreaterThanOrEqual(20);
+        expect(t1).toBeLessThanOrEqual(30);
+        expect(t2).toBeGreaterThanOrEqual(20);
+        expect(t2).toBeLessThanOrEqual(30);
+      }
+    });
+
+    it('should balance T1/T2 within 20% for a 20-question session', () => {
+      const images = createBlockedImages(500, 500);
+
+      for (let trial = 0; trial < 20; trial++) {
+        const queue = buildQueue(images, 20);
+        const t1 = queue.filter((item) => item.image.type === 'T1').length;
+        const t2 = queue.filter((item) => item.image.type === 'T2').length;
+
+        expect(t1 + t2).toBe(20);
+        expect(t1).toBeGreaterThanOrEqual(8);
+        expect(t1).toBeLessThanOrEqual(12);
+      }
+    });
+
+    it('should balance T1/T2 within 20% for a 100-question session', () => {
+      const images = createBlockedImages(500, 500);
+
+      for (let trial = 0; trial < 20; trial++) {
+        const queue = buildQueue(images, 100);
+        const t1 = queue.filter((item) => item.image.type === 'T1').length;
+        const t2 = queue.filter((item) => item.image.type === 'T2').length;
+
+        expect(t1 + t2).toBe(100);
+        expect(t1).toBeGreaterThanOrEqual(40);
+        expect(t1).toBeLessThanOrEqual(60);
+      }
+    });
+
+    it('should handle only T1 images gracefully', () => {
+      const images = createBlockedImages(50, 0);
+      const queue = buildQueue(images, 20);
+
+      expect(queue).toHaveLength(20);
+      expect(queue.every((item) => item.image.type === 'T1')).toBe(true);
+    });
+
+    it('should handle only T2 images gracefully', () => {
+      const images = createBlockedImages(0, 50);
+      const queue = buildQueue(images, 20);
+
+      expect(queue).toHaveLength(20);
+      expect(queue.every((item) => item.image.type === 'T2')).toBe(true);
+    });
+
+    it('should handle asymmetric pools (few T2)', () => {
+      const images = createBlockedImages(100, 5);
+      const queue = buildQueue(images, 20);
+
+      expect(queue).toHaveLength(20);
+      // T2 pool only has 5, so we take all 5 T2 and fill the rest with T1
+      const t2 = queue.filter((item) => item.image.type === 'T2').length;
+      expect(t2).toBeLessThanOrEqual(5);
+      expect(t2).toBeGreaterThanOrEqual(0);
     });
   });
 
@@ -105,7 +223,6 @@ describe('imageQueue', () => {
       const images = createMockImages(5);
       const queue = buildQueue(images, 5);
 
-      // Call multiple times - should always be 0 since items are sorted by priority
       expect(getNextImage(queue)).toBe(0);
       expect(getNextImage(queue)).toBe(0);
       expect(getNextImage(queue)).toBe(0);

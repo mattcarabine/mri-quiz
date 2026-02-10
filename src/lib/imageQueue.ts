@@ -2,33 +2,68 @@ import type { QuizImage, QuizItem, SessionLength } from '../types/quiz';
 import { calculatePriority } from './spacedRepetition';
 
 /**
+ * Fisher-Yates shuffle — unbiased, O(n).
+ * Returns a new array; does not mutate the input.
+ */
+export function fisherYatesShuffle<T>(arr: T[]): T[] {
+  const result = [...arr];
+  for (let i = result.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [result[i], result[j]] = [result[j], result[i]];
+  }
+  return result;
+}
+
+/**
  * Build initial queue from image metadata.
- * Creates QuizItem objects with default SM-2 values.
+ * Uses stratified sampling to guarantee a balanced mix of T1 and T2 images
+ * (each type within 40–60 % of the session), then applies priority sorting.
  */
 export function buildQueue(images: QuizImage[], sessionLength: SessionLength): QuizItem[] {
-  const items: QuizItem[] = images.map((image) => ({
-    image,
-    easeFactor: 2.5,
-    interval: 0,
-    repetitions: 0,
-    nextReview: Date.now(),
-    consecutiveCorrect: 0,
-    lastSeen: null,
-    priority: 50, // New images start with 50 priority
-  }));
+  const length = sessionLength === 'all'
+    ? images.length
+    : Math.min(sessionLength, images.length);
 
-  // Calculate priorities for all items
-  const itemsWithPriority = items.map((item) => ({
-    ...item,
-    priority: calculatePriority(item),
-  }));
+  if (length === 0) return [];
+
+  // Stratified sampling: separate pools by type
+  const t1Pool = fisherYatesShuffle(images.filter((img) => img.type === 'T1'));
+  const t2Pool = fisherYatesShuffle(images.filter((img) => img.type === 'T2'));
+
+  // Each type gets ~half; the odd slot is randomly assigned
+  const half = Math.floor(length / 2);
+  const extraToT1 = length % 2 === 1 && Math.random() < 0.5;
+
+  let t1Count = Math.min(half + (extraToT1 ? 1 : 0), t1Pool.length);
+  let t2Count = Math.min(length - t1Count, t2Pool.length);
+
+  // If one pool was too small, backfill from the other
+  t1Count = Math.min(length - t2Count, t1Pool.length);
+
+  // Draw from each pool and combine
+  const selected = fisherYatesShuffle([
+    ...t1Pool.slice(0, t1Count),
+    ...t2Pool.slice(0, t2Count),
+  ]);
+
+  // Create QuizItems with default SM-2 values and computed priorities
+  const items: QuizItem[] = selected.map((image) => {
+    const item: QuizItem = {
+      image,
+      easeFactor: 2.5,
+      interval: 0,
+      repetitions: 0,
+      nextReview: Date.now(),
+      consecutiveCorrect: 0,
+      lastSeen: null,
+      priority: 0,
+    };
+    item.priority = calculatePriority(item);
+    return item;
+  });
 
   // Sort by priority (highest first)
-  const sortedItems = itemsWithPriority.sort((a, b) => b.priority - a.priority);
-
-  // Limit to session length
-  const length = sessionLength === 'all' ? sortedItems.length : sessionLength;
-  return sortedItems.slice(0, length);
+  return items.sort((a, b) => b.priority - a.priority);
 }
 
 /**

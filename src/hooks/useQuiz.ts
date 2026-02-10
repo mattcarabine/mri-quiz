@@ -24,9 +24,7 @@ const initialState: QuizState = {
 function quizReducer(state: QuizState, action: QuizAction): QuizState {
   switch (action.type) {
     case 'START_QUIZ': {
-      // Shuffle images before building queue
-      const shuffled = [...action.images].sort(() => Math.random() - 0.5);
-      const items = buildQueue(shuffled, action.sessionLength);
+      const items = buildQueue(action.images, action.sessionLength);
 
       return {
         ...state,
@@ -63,75 +61,58 @@ function quizReducer(state: QuizState, action: QuizAction): QuizState {
     }
 
     case 'NEXT_QUESTION': {
-      // Check if session is complete
-      const sessionLength = state.sessionLength === 'all' ? state.items.length : state.sessionLength;
-      const isComplete = state.totalAnswered >= sessionLength;
-
-      if (isComplete) {
-        return {
-          ...state,
-          phase: 'results',
-        };
+      const sessionTotal = state.sessionLength === 'all' ? state.items.length : state.sessionLength;
+      if (state.totalAnswered >= sessionTotal) {
+        return { ...state, phase: 'results' };
       }
 
-      // Apply spaced repetition updates now (after explanation phase)
-      let updatedItems = [...state.items];
+      const updatedItems = [...state.items];
       let nextIndex = state.currentIndex + 1;
       const lastAnswer = state.answers[state.answers.length - 1];
+      const currentItem = updatedItems[state.currentIndex];
 
-      if (lastAnswer) {
-        const currentItem = updatedItems[state.currentIndex];
-        if (currentItem && lastAnswer.imageId === currentItem.image.id) {
-          // Update item with SM-2 algorithm (inline to avoid circular dependency)
-          const correct = lastAnswer.correct;
-          const item = currentItem;
+      // Apply inline SM-2 update for the item just answered
+      // (intentionally differs from spacedRepetition.updateItem: immediate re-review on miss, no priority boost)
+      if (lastAnswer && currentItem && lastAnswer.imageId === currentItem.image.id) {
+        const { correct } = lastAnswer;
+        const now = Date.now();
 
-          // Basic SM-2 update logic
-          const updatedItem: QuizItem = {
-            ...item,
-            lastSeen: Date.now(),
-            repetitions: correct ? item.repetitions + 1 : 0,
-            consecutiveCorrect: correct ? item.consecutiveCorrect + 1 : 0,
-          };
+        const updatedItem: QuizItem = {
+          ...currentItem,
+          lastSeen: now,
+          repetitions: correct ? currentItem.repetitions + 1 : 0,
+          consecutiveCorrect: correct ? currentItem.consecutiveCorrect + 1 : 0,
+        };
 
-          if (correct) {
-            // Increase interval based on ease factor
-            if (item.repetitions === 0) {
-              updatedItem.interval = 1;
-            } else if (item.repetitions === 1) {
-              updatedItem.interval = 6;
-            } else {
-              updatedItem.interval = Math.round(item.interval * item.easeFactor);
-            }
-            updatedItem.nextReview = Date.now() + updatedItem.interval * 24 * 60 * 60 * 1000;
-          } else {
-            // Reset on incorrect
+        if (correct) {
+          if (currentItem.repetitions === 0) {
             updatedItem.interval = 1;
-            updatedItem.nextReview = Date.now();
-            updatedItem.easeFactor = Math.max(1.3, item.easeFactor - 0.2);
+          } else if (currentItem.repetitions === 1) {
+            updatedItem.interval = 6;
+          } else {
+            updatedItem.interval = Math.round(currentItem.interval * currentItem.easeFactor);
           }
+          updatedItem.nextReview = now + updatedItem.interval * 24 * 60 * 60 * 1000;
+        } else {
+          updatedItem.interval = 1;
+          updatedItem.nextReview = now;
+          updatedItem.easeFactor = Math.max(1.3, currentItem.easeFactor - 0.2);
+        }
 
-          updatedItems[state.currentIndex] = updatedItem;
+        updatedItems[state.currentIndex] = updatedItem;
 
-          // If incorrect, reinsert 3-7 positions ahead
-          // Since we're removing the current item, the next item shifts to currentIndex
-          // so we don't need to increment nextIndex
-          if (!correct) {
-            const position = Math.floor(Math.random() * 5) + 3; // 3-7
-            const [itemToReinsert] = updatedItems.splice(state.currentIndex, 1);
-            const insertIndex = Math.min(state.currentIndex + position, updatedItems.length);
-            updatedItems.splice(insertIndex, 0, itemToReinsert);
-            nextIndex = state.currentIndex; // Don't increment - next item is now at current position
-          }
+        // Reinsert missed items 3-7 positions ahead; the splice shifts the next
+        // item into currentIndex, so nextIndex stays put
+        if (!correct) {
+          const offset = Math.floor(Math.random() * 5) + 3;
+          const [missed] = updatedItems.splice(state.currentIndex, 1);
+          const insertAt = Math.min(state.currentIndex + offset, updatedItems.length);
+          updatedItems.splice(insertAt, 0, missed);
+          nextIndex = state.currentIndex;
         }
       }
 
-      return {
-        ...state,
-        items: updatedItems,
-        currentIndex: nextIndex,
-        phase: 'question',
-      };
+      return { ...state, items: updatedItems, currentIndex: nextIndex, phase: 'question' };
     }
 
     case 'FINISH_QUIZ': {
@@ -258,13 +239,10 @@ export function useQuiz() {
     setPersistedState(initialState);
   }, [setPersistedState]);
 
-  /**
-   * Get the current image.
-   */
-  const currentImage = useMemo(() => {
-    const item = state.items[state.currentIndex];
-    return item ? item.image : null;
-  }, [state.items, state.currentIndex]);
+  const currentImage = useMemo(
+    () => state.items[state.currentIndex]?.image ?? null,
+    [state.items, state.currentIndex],
+  );
 
   return {
     state,
