@@ -1,8 +1,7 @@
 import { useReducer, useEffect, useCallback, useMemo } from 'react';
-import type { QuizState, QuizAction, QuizImage, SessionLength, ImageMetadata } from '../types/quiz';
+import type { QuizState, QuizAction, QuizImage, QuizItem, SessionLength, ImageMetadata } from '../types/quiz';
 import { buildQueue } from '../lib/imageQueue';
 import { useLocalStorage } from './useLocalStorage';
-import { useSpacedRepetition } from './useSpacedRepetition';
 import sampleMetadata from '../data/metadata.sample.json';
 
 // Sample fallback data in case metadata.json fails to load
@@ -75,11 +74,61 @@ function quizReducer(state: QuizState, action: QuizAction): QuizState {
         };
       }
 
-      // Move to next question
-      const nextIndex = state.currentIndex + 1;
+      // Apply spaced repetition updates now (after explanation phase)
+      let updatedItems = [...state.items];
+      let nextIndex = state.currentIndex + 1;
+      const lastAnswer = state.answers[state.answers.length - 1];
+
+      if (lastAnswer) {
+        const currentItem = updatedItems[state.currentIndex];
+        if (currentItem && lastAnswer.imageId === currentItem.image.id) {
+          // Update item with SM-2 algorithm (inline to avoid circular dependency)
+          const correct = lastAnswer.correct;
+          const item = currentItem;
+
+          // Basic SM-2 update logic
+          const updatedItem: QuizItem = {
+            ...item,
+            lastSeen: Date.now(),
+            repetitions: correct ? item.repetitions + 1 : 0,
+            consecutiveCorrect: correct ? item.consecutiveCorrect + 1 : 0,
+          };
+
+          if (correct) {
+            // Increase interval based on ease factor
+            if (item.repetitions === 0) {
+              updatedItem.interval = 1;
+            } else if (item.repetitions === 1) {
+              updatedItem.interval = 6;
+            } else {
+              updatedItem.interval = Math.round(item.interval * item.easeFactor);
+            }
+            updatedItem.nextReview = Date.now() + updatedItem.interval * 24 * 60 * 60 * 1000;
+          } else {
+            // Reset on incorrect
+            updatedItem.interval = 1;
+            updatedItem.nextReview = Date.now();
+            updatedItem.easeFactor = Math.max(1.3, item.easeFactor - 0.2);
+          }
+
+          updatedItems[state.currentIndex] = updatedItem;
+
+          // If incorrect, reinsert 3-7 positions ahead
+          // Since we're removing the current item, the next item shifts to currentIndex
+          // so we don't need to increment nextIndex
+          if (!correct) {
+            const position = Math.floor(Math.random() * 5) + 3; // 3-7
+            const [itemToReinsert] = updatedItems.splice(state.currentIndex, 1);
+            const insertIndex = Math.min(state.currentIndex + position, updatedItems.length);
+            updatedItems.splice(insertIndex, 0, itemToReinsert);
+            nextIndex = state.currentIndex; // Don't increment - next item is now at current position
+          }
+        }
+      }
 
       return {
         ...state,
+        items: updatedItems,
         currentIndex: nextIndex,
         phase: 'question',
       };
@@ -115,7 +164,6 @@ export function useQuiz() {
   const [metadata, setMetadata] = useLocalStorage<ImageMetadata | null>('quiz-metadata', null);
   const [state, dispatch] = useReducer(quizReducer, initialState);
   const [persistedState, setPersistedState] = useLocalStorage<QuizState>('quiz-state', initialState);
-  const { recordAnswer } = useSpacedRepetition(state.items);
 
   // Load metadata from JSON file on mount
   useEffect(() => {
@@ -180,20 +228,11 @@ export function useQuiz() {
     (answer: 'T1' | 'T2') => {
       if (state.phase !== 'question') return;
 
-      // First dispatch the answer to update score and phase
+      // Only dispatch the answer to update score and phase
+      // Do NOT modify items array here - that would change currentIndex reference
       dispatch({ type: 'ANSWER', answer });
-
-      // Then update items with spaced repetition
-      const currentItem = state.items[state.currentIndex];
-      if (currentItem) {
-        const correct = answer === currentItem.image.type;
-        const updatedItems = recordAnswer(state.currentIndex, correct);
-
-        // Update state items (this will trigger persistence)
-        state.items = updatedItems;
-      }
     },
-    [state, recordAnswer]
+    [state.phase]
   );
 
   /**
