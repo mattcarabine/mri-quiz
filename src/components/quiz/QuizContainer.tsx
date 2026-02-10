@@ -28,6 +28,37 @@ function getImageUrl(image: QuizImage): string {
   return `/images/${image.type.toLowerCase()}/${image.filename}`;
 }
 
+function QuitButton({ onClick }: { onClick: () => void }) {
+  return (
+    <button
+      onClick={onClick}
+      className="shrink-0 p-2 rounded-lg text-gray-400 hover:text-gray-100 hover:bg-gray-800 transition-colors"
+      aria-label="End quiz"
+      title="End quiz"
+    >
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5">
+        <path d="M6.28 5.22a.75.75 0 0 0-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 1 0 1.06 1.06L10 11.06l3.72 3.72a.75.75 0 1 0 1.06-1.06L11.06 10l3.72-3.72a.75.75 0 0 0-1.06-1.06L10 8.94 6.28 5.22Z" />
+      </svg>
+    </button>
+  );
+}
+
+function QuizHeader({ current, total, score, onQuit }: {
+  current: number;
+  total: number;
+  score: number;
+  onQuit: () => void;
+}) {
+  return (
+    <div className="flex items-start gap-4">
+      <div className="flex-1 min-w-0">
+        <ProgressBar current={current} total={total} score={score} />
+      </div>
+      <QuitButton onClick={onQuit} />
+    </div>
+  );
+}
+
 export function QuizContainer() {
   const { state, startQuiz, submitAnswer, nextQuestion, resetQuiz, currentImage, metadata } = useQuiz();
 
@@ -57,10 +88,11 @@ export function QuizContainer() {
 
     return (
       <div className="w-full max-w-4xl mx-auto space-y-6">
-        <ProgressBar
+        <QuizHeader
           current={state.totalAnswered + 1}
           total={sessionLength}
           score={state.score}
+          onQuit={resetQuiz}
         />
         <ImageDisplay
           src={getImageUrl(currentImage)}
@@ -87,10 +119,11 @@ export function QuizContainer() {
 
     return (
       <div className="w-full max-w-4xl mx-auto space-y-6">
-        <ProgressBar
+        <QuizHeader
           current={state.totalAnswered}
           total={sessionLength}
           score={state.score}
+          onQuit={resetQuiz}
         />
         <ImageDisplay
           src={getImageUrl(currentImage)}
