@@ -43,7 +43,23 @@ export function useLocalStorage<T>(
           window.localStorage.setItem(key, JSON.stringify(valueToStore));
         }
       } catch (error) {
-        console.warn(`Error setting localStorage key "${key}":`, error);
+        // Handle quota exceeded error gracefully
+        if (error instanceof Error && error.name === 'QuotaExceededError') {
+          console.warn(`localStorage quota exceeded for key "${key}". Attempting to clear old data...`);
+          try {
+            // Try to clear some old localStorage data
+            const keysToRemove = Object.keys(localStorage).filter(
+              (k) => k.startsWith('quiz-') && k !== key
+            );
+            keysToRemove.forEach((k) => localStorage.removeItem(k));
+            // Try again after clearing
+            window.localStorage.setItem(key, JSON.stringify(value instanceof Function ? value(storedValue) : value));
+          } catch (retryError) {
+            console.error(`Failed to save to localStorage even after clearing: ${retryError}`);
+          }
+        } else {
+          console.warn(`Error setting localStorage key "${key}":`, error);
+        }
       }
     },
     [key, storedValue]

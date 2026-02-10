@@ -39,22 +39,22 @@ export function ResultsScreen({ score, total, answers, onReset }: ResultsScreenP
   }
 
   return (
-    <div className="w-full max-w-4xl mx-auto space-y-6">
+    <div className="w-full max-w-4xl mx-auto space-y-6 px-4 sm:px-0">
       {/* Final Score */}
-      <div className="text-center p-8 rounded-lg bg-gray-800 border-2 border-blue-500">
-        <h2 className="text-4xl font-bold text-gray-100 mb-2">Quiz Complete!</h2>
-        <div className="text-6xl font-bold text-blue-400 my-4">
+      <div className="text-center p-6 sm:p-8 rounded-lg bg-gray-800 border-2 border-blue-500">
+        <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-100 mb-2">Quiz Complete!</h2>
+        <div className="text-4xl sm:text-5xl md:text-6xl font-bold text-blue-400 my-4">
           {score}/{total}
         </div>
-        <div className="text-3xl text-gray-300 mb-4">{percentage}%</div>
-        <p className={`text-xl ${feedbackColor}`}>{feedbackMessage}</p>
+        <div className="text-2xl sm:text-3xl text-gray-300 mb-4">{percentage}%</div>
+        <p className={`text-base sm:text-lg md:text-xl ${feedbackColor}`}>{feedbackMessage}</p>
       </div>
 
       {/* Breakdown */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="p-6 rounded-lg bg-gray-800">
-          <h3 className="text-lg font-semibold text-blue-400 mb-3">T1-Weighted Images</h3>
-          <div className="text-3xl font-bold text-gray-100">
+        <div className="p-4 sm:p-6 rounded-lg bg-gray-800">
+          <h3 className="text-base sm:text-lg font-semibold text-blue-400 mb-3">T1-Weighted Images</h3>
+          <div className="text-2xl sm:text-3xl font-bold text-gray-100">
             {t1Correct}/{t1Questions.length}
           </div>
           <p className="text-gray-400 text-sm mt-1">
@@ -64,9 +64,9 @@ export function ResultsScreen({ score, total, answers, onReset }: ResultsScreenP
           </p>
         </div>
 
-        <div className="p-6 rounded-lg bg-gray-800">
-          <h3 className="text-lg font-semibold text-purple-400 mb-3">T2-Weighted Images</h3>
-          <div className="text-3xl font-bold text-gray-100">
+        <div className="p-4 sm:p-6 rounded-lg bg-gray-800">
+          <h3 className="text-base sm:text-lg font-semibold text-purple-400 mb-3">T2-Weighted Images</h3>
+          <div className="text-2xl sm:text-3xl font-bold text-gray-100">
             {t2Correct}/{t2Questions.length}
           </div>
           <p className="text-gray-400 text-sm mt-1">
@@ -79,21 +79,21 @@ export function ResultsScreen({ score, total, answers, onReset }: ResultsScreenP
 
       {/* Missed Questions */}
       {missedQuestions.length > 0 && (
-        <div className="p-6 rounded-lg bg-gray-800">
-          <h3 className="text-lg font-semibold text-red-400 mb-4">
+        <div className="p-4 sm:p-6 rounded-lg bg-gray-800">
+          <h3 className="text-base sm:text-lg font-semibold text-red-400 mb-4">
             Questions to Review ({missedQuestions.length})
           </h3>
           <div className="space-y-3">
             {missedQuestions.map((answer, idx) => (
               <div
                 key={answer.imageId}
-                className="flex items-center justify-between p-3 rounded bg-gray-900 border border-gray-700"
+                className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-3 rounded bg-gray-900 border border-gray-700 gap-2"
               >
                 <div className="flex items-center gap-3">
                   <span className="text-gray-500 font-mono text-sm">#{idx + 1}</span>
-                  <span className="text-gray-300">Image ID: {answer.imageId}</span>
+                  <span className="text-gray-300 text-sm">Image ID: {answer.imageId}</span>
                 </div>
-                <div className="flex items-center gap-4">
+                <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 text-sm ml-8 sm:ml-0">
                   <span className="text-red-400">Your answer: {answer.userAnswer}</span>
                   <span className="text-green-400">Correct: {answer.correctAnswer}</span>
                 </div>
@@ -106,10 +106,10 @@ export function ResultsScreen({ score, total, answers, onReset }: ResultsScreenP
       {/* Try Again Button */}
       <button
         onClick={onReset}
-        className="w-full py-4 px-8 text-xl font-semibold rounded-lg
+        className="w-full py-4 px-8 text-lg sm:text-xl font-semibold rounded-lg
                    bg-blue-600 hover:bg-blue-700 text-white
                    focus:outline-none focus:ring-4 focus:ring-blue-500/50
-                   transition-all"
+                   transition-all min-h-[56px] active:scale-98"
       >
         Try Again
       </button>
