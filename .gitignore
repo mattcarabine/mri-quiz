@@ -2,6 +2,4 @@ node_modules/
 dist/
 .working/
 *.log
-public/images/t1/
-public/images/t2/
 src/data/metadata.json
