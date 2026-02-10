@@ -9,6 +9,7 @@ import { AnswerButtons } from './AnswerButtons';
 import { QuizHeader } from './QuizHeader';
 import { Explanation } from './Explanation';
 import { ResultsScreen } from './ResultsScreen';
+import { CloseIcon } from '../icons/CloseIcon';
 import type { QuizImage } from '../../types/quiz';
 
 function ErrorState({ message, onReset }: { message: string; onReset?: () => void }) {
@@ -47,9 +48,7 @@ function QuitButton({ onClick, isFixed = false }: { onClick: () => void; isFixed
         aria-label="End quiz"
         title="End quiz"
       >
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5">
-          <path d="M6.28 5.22a.75.75 0 0 0-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 1 0 1.06 1.06L10 11.06l3.72 3.72a.75.75 0 1 0 1.06-1.06L11.06 10l3.72-3.72a.75.75 0 0 0-1.06-1.06L10 8.94 6.28 5.22Z" />
-        </svg>
+        <CloseIcon className="w-5 h-5" />
       </button>
     );
   }
@@ -61,9 +60,7 @@ function QuitButton({ onClick, isFixed = false }: { onClick: () => void; isFixed
       aria-label="End quiz"
       title="End quiz"
     >
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5">
-        <path d="M6.28 5.22a.75.75 0 0 0-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 1 0 1.06 1.06L10 11.06l3.72 3.72a.75.75 0 1 0 1.06-1.06L11.06 10l3.72-3.72a.75.75 0 0 0-1.06-1.06L10 8.94 6.28 5.22Z" />
-      </svg>
+      <CloseIcon className="w-5 h-5" />
     </button>
   );
 }

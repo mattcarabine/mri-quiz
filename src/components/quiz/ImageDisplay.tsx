@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { ImageViewer } from './ImageViewer';
 
 interface ImageDisplayProps {
   src: string;
@@ -10,6 +11,7 @@ interface ImageDisplayProps {
 
 export function ImageDisplay({ src, alt, loading, isTablet = false, variant = 'question' }: ImageDisplayProps) {
   const [imageError, setImageError] = useState(false);
+  const [isViewerOpen, setIsViewerOpen] = useState(false);
 
   if (loading) {
     return (
@@ -46,13 +48,22 @@ export function ImageDisplay({ src, alt, loading, isTablet = false, variant = 'q
     : 'max-h-[400px] sm:max-h-[500px]';
 
   return (
-    <div className="flex items-center justify-center bg-gray-900 rounded-lg p-4 sm:p-8">
-      <img
+    <>
+      <div className="flex items-center justify-center bg-gray-900 rounded-lg p-4 sm:p-8">
+        <img
+          src={src}
+          alt={alt}
+          className={`max-w-full w-full sm:max-w-lg ${imageMaxHeight} object-contain rounded cursor-pointer hover:opacity-90 transition-opacity`}
+          onClick={() => setIsViewerOpen(true)}
+          onError={() => setImageError(true)}
+        />
+      </div>
+      <ImageViewer
         src={src}
         alt={alt}
-        className={`max-w-full w-full sm:max-w-lg ${imageMaxHeight} object-contain rounded`}
-        onError={() => setImageError(true)}
+        isOpen={isViewerOpen}
+        onClose={() => setIsViewerOpen(false)}
       />
-    </div>
+    </>
   );
 }
