@@ -1,12 +1,18 @@
+import { QuizContainer } from './components/quiz/QuizContainer';
+
 function App() {
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-950 text-gray-100">
       <div className="container mx-auto px-4 py-8">
-        <h1 className="text-3xl font-bold text-gray-900">T1/T2 MRI Quiz</h1>
-        <p className="mt-2 text-gray-600">Quiz components will be added in T004</p>
+        <header className="text-center mb-12">
+          <h1 className="text-4xl font-bold text-gray-100">T1/T2 MRI Quiz</h1>
+        </header>
+        <main className="max-w-6xl mx-auto">
+          <QuizContainer />
+        </main>
       </div>
     </div>
-  )
+  );
 }
 
-export default App
+export default App;
