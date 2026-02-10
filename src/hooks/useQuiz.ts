@@ -237,5 +237,6 @@ export function useQuiz() {
     finishQuiz,
     resetQuiz,
     currentImage,
+    metadata,
   };
 }

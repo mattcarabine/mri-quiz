@@ -5,7 +5,11 @@
       "WebFetch(domain:brain-development.org)",
       "WebFetch(domain:github.com)",
       "mcp__plugin_context7_context7__resolve-library-id",
-      "mcp__plugin_context7_context7__query-docs"
+      "mcp__plugin_context7_context7__query-docs",
+      "Bash(/Users/matt/.claude/plugins/cache/colony-plugins/colony/1.0.0/bin/colony state set:*)",
+      "Bash(/Users/matt/.claude/plugins/cache/colony-plugins/colony/1.0.0/bin/colony state log:*)",
+      "Bash(npm test:*)",
+      "Bash(git commit:*)"
     ]
   }
 }
