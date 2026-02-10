@@ -3,12 +3,10 @@ import type { QuizState, QuizAction, QuizImage, SessionLength, ImageMetadata } f
 import { buildQueue } from '../lib/imageQueue';
 import { useLocalStorage } from './useLocalStorage';
 import { useSpacedRepetition } from './useSpacedRepetition';
+import sampleMetadata from '../data/metadata.sample.json';
 
 // Sample fallback data in case metadata.json fails to load
-const SAMPLE_IMAGES: QuizImage[] = [
-  { id: 'sample-1', filename: 'sample-t1.jpg', type: 'T1', subject: 'Sample' },
-  { id: 'sample-2', filename: 'sample-t2.jpg', type: 'T2', subject: 'Sample' },
-];
+const SAMPLE_IMAGES: QuizImage[] = sampleMetadata.images as QuizImage[];
 
 // Initial quiz state
 const initialState: QuizState = {
