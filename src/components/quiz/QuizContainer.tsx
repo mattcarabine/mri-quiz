@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { useQuiz } from '../../hooks/useQuiz';
 import { useImagePreloader } from '../../hooks/useImagePreloader';
 import { SessionSelector } from './SessionSelector';
@@ -64,6 +65,38 @@ export function QuizContainer() {
 
   // Preload next 2-3 images for smooth UX
   useImagePreloader(state.items, state.currentIndex);
+
+  // Keyboard shortcuts
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      // Ignore if user is typing in an input/textarea
+      if (event.target instanceof HTMLInputElement || event.target instanceof HTMLTextAreaElement) {
+        return;
+      }
+
+      // Question phase: 1 for T1, 2 for T2
+      if (state.phase === 'question') {
+        if (event.key === '1') {
+          event.preventDefault();
+          submitAnswer('T1');
+        } else if (event.key === '2') {
+          event.preventDefault();
+          submitAnswer('T2');
+        }
+      }
+
+      // Explanation phase: Enter to continue
+      if (state.phase === 'explanation') {
+        if (event.key === 'Enter') {
+          event.preventDefault();
+          nextQuestion();
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [state.phase, submitAnswer, nextQuestion]);
 
   const sessionLength = state.sessionLength === 'all' ? state.items.length : state.sessionLength;
 

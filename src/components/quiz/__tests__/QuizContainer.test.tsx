@@ -95,4 +95,67 @@ describe('QuizContainer', () => {
       expect(screen.getByText(/T1 vs T2 MRI Quiz/i)).toBeInTheDocument();
     });
   });
+
+  describe('Keyboard shortcuts', () => {
+    it('pressing "1" submits T1 answer during question phase', async () => {
+      await startQuiz();
+
+      // Press "1" key
+      await userEvent.keyboard('1');
+
+      // Should move to explanation phase
+      await waitFor(() => {
+        expect(screen.getByRole('button', { name: /continue/i })).toBeInTheDocument();
+      });
+    });
+
+    it('pressing "2" submits T2 answer during question phase', async () => {
+      await startQuiz();
+
+      // Press "2" key
+      await userEvent.keyboard('2');
+
+      // Should move to explanation phase
+      await waitFor(() => {
+        expect(screen.getByRole('button', { name: /continue/i })).toBeInTheDocument();
+      });
+    });
+
+    it('pressing Enter continues to next question during explanation phase', async () => {
+      await startQuiz();
+
+      // Answer first question with "1" key
+      await userEvent.keyboard('1');
+
+      // Wait for explanation phase
+      await waitFor(() => {
+        expect(screen.getByRole('button', { name: /continue/i })).toBeInTheDocument();
+      });
+
+      // Press Enter to continue
+      await userEvent.keyboard('{Enter}');
+
+      // Should move to next question
+      await waitFor(() => {
+        expect(screen.getByText(/question 2 of/i)).toBeInTheDocument();
+      });
+    });
+
+    it('keyboard shortcuts do not trigger during setup phase', async () => {
+      render(<QuizContainer />);
+
+      // Wait for setup phase
+      await waitFor(() => {
+        expect(screen.getByText(/T1 vs T2 MRI Quiz/i)).toBeInTheDocument();
+      });
+
+      // Press keys
+      await userEvent.keyboard('1');
+      await userEvent.keyboard('2');
+      await userEvent.keyboard('{Enter}');
+
+      // Should still be in setup phase
+      expect(screen.getByText(/T1 vs T2 MRI Quiz/i)).toBeInTheDocument();
+    });
+  });
 });
