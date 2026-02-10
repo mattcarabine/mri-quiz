@@ -4,9 +4,11 @@ interface ImageDisplayProps {
   src: string;
   alt: string;
   loading: boolean;
+  isTablet?: boolean;
+  variant?: 'question' | 'explanation';
 }
 
-export function ImageDisplay({ src, alt, loading }: ImageDisplayProps) {
+export function ImageDisplay({ src, alt, loading, isTablet = false, variant = 'question' }: ImageDisplayProps) {
   const [imageError, setImageError] = useState(false);
 
   if (loading) {
@@ -34,12 +36,21 @@ export function ImageDisplay({ src, alt, loading }: ImageDisplayProps) {
     );
   }
 
+  // On tablet, constrain image height to viewport minus fixed elements
+  // Question phase: Header (~100px) + Buttons (~140px) + Margins (~60px) = ~300px
+  // Explanation phase: More conservative to leave room for explanation content
+  const imageMaxHeight = isTablet
+    ? variant === 'explanation'
+      ? 'max-h-[calc(100vh-500px)] min-h-[200px]'
+      : 'max-h-[calc(100vh-300px)] min-h-[250px]'
+    : 'max-h-[400px] sm:max-h-[500px]';
+
   return (
     <div className="flex items-center justify-center bg-gray-900 rounded-lg p-4 sm:p-8">
       <img
         src={src}
         alt={alt}
-        className="max-w-full w-full sm:max-w-lg max-h-[400px] sm:max-h-[500px] object-contain rounded"
+        className={`max-w-full w-full sm:max-w-lg ${imageMaxHeight} object-contain rounded`}
         onError={() => setImageError(true)}
       />
     </div>

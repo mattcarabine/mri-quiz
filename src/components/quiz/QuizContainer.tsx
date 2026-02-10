@@ -158,6 +158,7 @@ export function QuizContainer() {
               src={getImageUrl(currentImage)}
               alt={`MRI scan ${currentImage.id}`}
               loading={false}
+              isTablet
             />
           </div>
           <AnswerButtons
@@ -226,6 +227,8 @@ export function QuizContainer() {
               src={getImageUrl(currentImage)}
               alt={`MRI scan ${currentImage.id}`}
               loading={false}
+              isTablet
+              variant="explanation"
             />
             <Explanation
               type={currentImage.type}
