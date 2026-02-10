@@ -1,3 +1,5 @@
+import { keyDifferentiator } from './quickReference';
+
 export interface ExplanationContent {
   title: string;
   characteristics: string[];
@@ -21,7 +23,7 @@ export function getExplanation(type: 'T1' | 'T2', correct: boolean): Explanation
         'Good for anatomical detail',
       ],
       memoryAid: 'T1 = ONE anatomy scan - fat bright, water dark',
-      keyDifferentiator: 'Look at the ventricles (CSF spaces) - DARK in T1, BRIGHT in T2',
+      keyDifferentiator,
       feedbackMessage: correct
         ? 'Correct! T1 images show dark CSF and bright fat, excellent for anatomy.'
         : 'This is a T1 image. Remember: T1 has DARK ventricles (CSF), while T2 has BRIGHT ventricles.',
@@ -35,8 +37,8 @@ export function getExplanation(type: 'T1' | 'T2', correct: boolean): Explanation
         'Gray matter appears brighter than white matter',
         'Good for detecting pathology and edema',
       ],
-      memoryAid: 'T2 = TWO = H2O - water and fluids are bright',
-      keyDifferentiator: 'Look at the ventricles (CSF spaces) - DARK in T1, BRIGHT in T2',
+      memoryAid: 'T2 = TWO = H₂O - water and fluids are bright',
+      keyDifferentiator,
       feedbackMessage: correct
         ? 'Correct! T2 images show bright CSF and are excellent for detecting pathology.'
         : 'This is a T2 image. Remember: T2 has BRIGHT ventricles (CSF), while T1 has DARK ventricles.',

@@ -63,8 +63,8 @@ describe('explanations', () => {
 
     it('should provide T2 memory aid with water/H2O reference', () => {
       const explanation = getExplanation('T2', true);
-      expect(explanation.memoryAid).toBe('T2 = TWO = H2O - water and fluids are bright');
-      expect(explanation.memoryAid).toContain('H2O');
+      expect(explanation.memoryAid).toBe('T2 = TWO = H₂O - water and fluids are bright');
+      expect(explanation.memoryAid).toMatch(/H[₂2]O/); // Match both H₂O and H2O
     });
 
     it('should provide key differentiator mentioning ventricles', () => {

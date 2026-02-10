@@ -23,7 +23,8 @@ interface AccordionItemProps {
 function StatusBadge({ group }: StatusBadgeProps) {
   if (group.status === 'eventually-correct') {
     return (
-      <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-yellow-900/60 text-yellow-300 border border-yellow-700/50">
+      <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-900/60 text-yellow-300 border border-yellow-600/50">
+        <span className="w-2 h-2 rounded-full bg-yellow-400" aria-hidden="true"></span>
         Recovered
       </span>
     );
@@ -35,7 +36,8 @@ function StatusBadge({ group }: StatusBadgeProps) {
       : 'Incorrect';
 
   return (
-    <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-red-900/60 text-red-300 border border-red-700/50">
+    <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-900/60 text-red-300 border border-red-600/50">
+      <span className="w-2 h-2 rounded-full bg-red-400" aria-hidden="true"></span>
       {label}
     </span>
   );
@@ -47,11 +49,11 @@ function AccordionItem({ group, isExpanded, onToggle }: AccordionItemProps) {
     : null;
 
   return (
-    <div className="rounded-lg bg-gray-900 border border-gray-700 overflow-hidden">
+    <div className="rounded-xl bg-gradient-to-br from-slate-900 to-slate-800 border border-slate-700/50 overflow-hidden shadow-surface">
       <button
         onClick={onToggle}
         aria-expanded={isExpanded}
-        className="w-full flex items-center justify-between p-3 text-left hover:bg-gray-800/50 transition-colors"
+        className="w-full flex items-center justify-between p-4 text-left hover:bg-slate-800/50 transition-colors"
       >
         <div className="flex items-center gap-3 min-w-0">
           <svg
@@ -63,7 +65,7 @@ function AccordionItem({ group, isExpanded, onToggle }: AccordionItemProps) {
           >
             <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
           </svg>
-          <span className="text-gray-300 text-sm truncate">{group.imageId}</span>
+          <span className="text-gray-300 text-sm font-medium truncate">{group.imageId}</span>
           <StatusBadge group={group} />
         </div>
         <span className="text-gray-500 text-xs shrink-0 ml-2">
@@ -72,13 +74,13 @@ function AccordionItem({ group, isExpanded, onToggle }: AccordionItemProps) {
       </button>
 
       {isExpanded && (
-        <div className="border-t border-gray-700 p-4 space-y-4">
+        <div className="border-t border-slate-700/50 p-4 space-y-4 bg-slate-950/30">
           {imageUrl && (
-            <div className="flex items-center justify-center bg-gray-950 rounded-lg p-4">
+            <div className="flex items-center justify-center bg-slate-950 rounded-lg p-4 border border-slate-700/50 shadow-surface">
               <img
                 src={imageUrl}
                 alt={`MRI scan ${group.imageId}`}
-                className="max-w-full max-h-[300px] object-contain rounded"
+                className="max-w-full max-h-[300px] object-contain rounded shadow-elevated"
                 onError={(e) => {
                   (e.target as HTMLImageElement).style.display = 'none';
                 }}
@@ -185,9 +187,9 @@ export function ResultsScreen({ score, total, answers, images, onReset }: Result
   return (
     <div className="w-full max-w-4xl mx-auto space-y-6 px-4 sm:px-0">
       {/* Final Score */}
-      <div className="text-center p-6 sm:p-8 rounded-lg bg-gray-800 border-2 border-blue-500">
+      <div className="text-center p-6 sm:p-8 rounded-xl bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 border-2 border-blue-500/50 shadow-elevated animate-slide-in">
         <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-100 mb-2">Quiz Complete!</h2>
-        <div className="text-4xl sm:text-5xl md:text-6xl font-bold text-blue-400 my-4">
+        <div className="text-4xl sm:text-5xl md:text-6xl font-bold text-gradient-score my-4">
           {score}/{total}
         </div>
         <div className="text-2xl sm:text-3xl text-gray-300 mb-4">{percentageDisplay}%</div>
@@ -195,31 +197,45 @@ export function ResultsScreen({ score, total, answers, images, onReset }: Result
       </div>
 
       {/* Breakdown */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="p-4 sm:p-6 rounded-lg bg-gray-800">
-          <h3 className="text-base sm:text-lg font-semibold text-blue-400 mb-3">T1-Weighted Images</h3>
-          <div className="text-2xl sm:text-3xl font-bold text-gray-100">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 animate-slide-in" style={{ animationDelay: '0.1s' }}>
+        <div className="p-4 sm:p-6 rounded-xl bg-gradient-to-br from-blue-950/30 to-cyan-950/30 border border-blue-700/30 shadow-surface">
+          <h3 className="text-base sm:text-lg font-semibold text-gradient-t1 mb-3">T1-Weighted Images</h3>
+          <div className="text-2xl sm:text-3xl font-bold text-gray-100 mb-2">
             {t1Correct}/{t1Questions.length}
           </div>
-          <p className="text-gray-400 text-sm mt-1">
+          <p className="text-gray-400 text-sm mb-3">
             {formatAccuracy(t1Correct, t1Questions.length)}
           </p>
+          {/* Visual bar chart */}
+          <div className="w-full bg-slate-800 rounded-full h-2 overflow-hidden">
+            <div
+              className="bg-gradient-t1 h-full transition-all duration-500 rounded-full"
+              style={{ width: `${t1Questions.length > 0 ? (t1Correct / t1Questions.length) * 100 : 0}%` }}
+            />
+          </div>
         </div>
 
-        <div className="p-4 sm:p-6 rounded-lg bg-gray-800">
-          <h3 className="text-base sm:text-lg font-semibold text-purple-400 mb-3">T2-Weighted Images</h3>
-          <div className="text-2xl sm:text-3xl font-bold text-gray-100">
+        <div className="p-4 sm:p-6 rounded-xl bg-gradient-to-br from-purple-950/30 to-pink-950/30 border border-purple-700/30 shadow-surface">
+          <h3 className="text-base sm:text-lg font-semibold text-gradient-t2 mb-3">T2-Weighted Images</h3>
+          <div className="text-2xl sm:text-3xl font-bold text-gray-100 mb-2">
             {t2Correct}/{t2Questions.length}
           </div>
-          <p className="text-gray-400 text-sm mt-1">
+          <p className="text-gray-400 text-sm mb-3">
             {formatAccuracy(t2Correct, t2Questions.length)}
           </p>
+          {/* Visual bar chart */}
+          <div className="w-full bg-slate-800 rounded-full h-2 overflow-hidden">
+            <div
+              className="bg-gradient-t2 h-full transition-all duration-500 rounded-full"
+              style={{ width: `${t2Questions.length > 0 ? (t2Correct / t2Questions.length) * 100 : 0}%` }}
+            />
+          </div>
         </div>
       </div>
 
       {/* Questions to Review - Grouped Accordion */}
       {reviewGroups.length > 0 && (
-        <div className="p-4 sm:p-6 rounded-lg bg-gray-800">
+        <div className="p-4 sm:p-6 rounded-xl bg-gradient-to-br from-slate-900 to-slate-800 border border-slate-700/50 shadow-elevated animate-slide-in" style={{ animationDelay: '0.2s' }}>
           <h3 className="text-base sm:text-lg font-semibold text-red-400 mb-4">
             Questions to Review ({reviewGroups.length} {reviewGroups.length === 1 ? 'image' : 'images'})
           </h3>
@@ -239,10 +255,15 @@ export function ResultsScreen({ score, total, answers, images, onReset }: Result
       {/* Try Again Button */}
       <button
         onClick={onReset}
-        className="w-full py-4 px-8 text-lg sm:text-xl font-semibold rounded-lg
-                   bg-blue-600 hover:bg-blue-700 text-white
+        className="w-full py-4 px-8 text-lg sm:text-xl font-semibold rounded-xl
+                   bg-gradient-to-br from-blue-600 to-cyan-600
+                   hover:from-blue-500 hover:to-cyan-500
+                   hover:ring-2 hover:ring-blue-400/50 hover:shadow-lg hover:shadow-blue-500/25
+                   text-white shadow-surface
                    focus:outline-none focus:ring-4 focus:ring-blue-500/50
-                   transition-all min-h-[56px] active:scale-98"
+                   transition-all min-h-[56px] active:scale-[0.98]
+                   animate-slide-in"
+        style={{ animationDelay: '0.3s' }}
       >
         Try Again
       </button>
