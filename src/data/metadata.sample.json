@@ -1,0 +1,69 @@
+{
+  "images": [
+    {
+      "id": "IXI001-T1",
+      "filename": "IXI001-Guys-0001-T1.png",
+      "type": "T1",
+      "subject": "IXI001"
+    },
+    {
+      "id": "IXI002-T1",
+      "filename": "IXI002-Guys-0002-T1.png",
+      "type": "T1",
+      "subject": "IXI002"
+    },
+    {
+      "id": "IXI003-T1",
+      "filename": "IXI003-HH-0003-T1.png",
+      "type": "T1",
+      "subject": "IXI003"
+    },
+    {
+      "id": "IXI004-T1",
+      "filename": "IXI004-Guys-0004-T1.png",
+      "type": "T1",
+      "subject": "IXI004"
+    },
+    {
+      "id": "IXI005-T1",
+      "filename": "IXI005-HH-0005-T1.png",
+      "type": "T1",
+      "subject": "IXI005"
+    },
+    {
+      "id": "IXI001-T2",
+      "filename": "IXI001-Guys-0001-T2.png",
+      "type": "T2",
+      "subject": "IXI001"
+    },
+    {
+      "id": "IXI002-T2",
+      "filename": "IXI002-Guys-0002-T2.png",
+      "type": "T2",
+      "subject": "IXI002"
+    },
+    {
+      "id": "IXI003-T2",
+      "filename": "IXI003-HH-0003-T2.png",
+      "type": "T2",
+      "subject": "IXI003"
+    },
+    {
+      "id": "IXI004-T2",
+      "filename": "IXI004-Guys-0004-T2.png",
+      "type": "T2",
+      "subject": "IXI004"
+    },
+    {
+      "id": "IXI005-T2",
+      "filename": "IXI005-HH-0005-T2.png",
+      "type": "T2",
+      "subject": "IXI005"
+    }
+  ],
+  "stats": {
+    "total": 10,
+    "t1Count": 5,
+    "t2Count": 5
+  }
+}
