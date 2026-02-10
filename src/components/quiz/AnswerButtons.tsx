@@ -1,11 +1,18 @@
 interface AnswerButtonsProps {
   onAnswer: (answer: 'T1' | 'T2') => void;
   disabled: boolean;
+  isFixed?: boolean;
 }
 
-export function AnswerButtons({ onAnswer, disabled }: AnswerButtonsProps) {
-  return (
-    <div className="flex flex-col sm:flex-row gap-4 w-full max-w-2xl mx-auto">
+export function AnswerButtons({ onAnswer, disabled, isFixed = false }: AnswerButtonsProps) {
+  const containerClasses = isFixed
+    ? 'fixed bottom-0 left-0 right-0 z-30 bg-gradient-to-t from-gray-950 via-gray-950/95 to-transparent backdrop-blur-sm pt-6 pb-safe animate-slide-up'
+    : '';
+
+  const innerClasses = 'flex flex-col sm:flex-row gap-4 w-full max-w-2xl mx-auto';
+
+  const content = (
+    <div className={innerClasses}>
       <button
         onClick={() => onAnswer('T1')}
         disabled={disabled}
@@ -39,4 +46,14 @@ export function AnswerButtons({ onAnswer, disabled }: AnswerButtonsProps) {
       </button>
     </div>
   );
+
+  if (isFixed) {
+    return (
+      <div className={containerClasses}>
+        <div className="px-4 pb-6">{content}</div>
+      </div>
+    );
+  }
+
+  return content;
 }

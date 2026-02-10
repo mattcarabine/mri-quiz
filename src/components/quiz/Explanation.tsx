@@ -5,13 +5,32 @@ interface ExplanationProps {
   correct: boolean;
   userAnswer: 'T1' | 'T2';
   onContinue: () => void;
+  isTablet?: boolean;
 }
 
-export function Explanation({ type, correct, userAnswer, onContinue }: ExplanationProps) {
+export function Explanation({ type, correct, userAnswer, onContinue, isTablet = false }: ExplanationProps) {
   const explanation = correct ? null : getExplanation(type, correct);
 
+  const buttonContent = (
+    <button
+      onClick={onContinue}
+      className="w-full py-4 px-8 text-xl font-semibold rounded-xl
+                 bg-gradient-to-br from-green-600 to-emerald-600
+                 hover:from-green-500 hover:to-emerald-500
+                 hover:ring-2 hover:ring-green-400/50 hover:shadow-lg hover:shadow-green-500/25
+                 text-white shadow-surface
+                 focus:outline-none focus:ring-4 focus:ring-green-500/50
+                 transition-all active:scale-[0.98]
+                 animate-slide-in"
+      style={{ animationDelay: correct ? '0.1s' : '0.3s' }}
+    >
+      Continue <span className="text-sm font-normal opacity-75">(Press Enter)</span>
+    </button>
+  );
+
   return (
-    <div className="w-full max-w-3xl mx-auto space-y-6">
+    <>
+    <div className={`w-full max-w-3xl mx-auto space-y-6 ${isTablet ? 'pb-32' : ''}`}>
       {/* Result Header */}
       <div className={`flex items-center justify-center gap-3 p-6 rounded-xl shadow-elevated animate-slide-in
                       ${correct ? 'bg-gradient-to-br from-green-900/50 to-emerald-900/50 border border-green-600/30' : 'bg-gradient-to-br from-red-900/50 to-rose-900/50 border border-red-600/30'}`}>
@@ -83,20 +102,13 @@ export function Explanation({ type, correct, userAnswer, onContinue }: Explanati
       )}
 
       {/* Continue Button */}
-      <button
-        onClick={onContinue}
-        className="w-full py-4 px-8 text-xl font-semibold rounded-xl
-                   bg-gradient-to-br from-green-600 to-emerald-600
-                   hover:from-green-500 hover:to-emerald-500
-                   hover:ring-2 hover:ring-green-400/50 hover:shadow-lg hover:shadow-green-500/25
-                   text-white shadow-surface
-                   focus:outline-none focus:ring-4 focus:ring-green-500/50
-                   transition-all active:scale-[0.98]
-                   animate-slide-in"
-        style={{ animationDelay: correct ? '0.1s' : '0.3s' }}
-      >
-        Continue <span className="text-sm font-normal opacity-75">(Press Enter)</span>
-      </button>
+      {!isTablet && buttonContent}
     </div>
+    {isTablet && (
+      <div className="fixed bottom-0 left-0 right-0 z-30 bg-gradient-to-t from-gray-950 via-gray-950/95 to-transparent backdrop-blur-sm pt-6 pb-safe animate-slide-up">
+        <div className="px-4 pb-6 max-w-3xl mx-auto">{buttonContent}</div>
+      </div>
+    )}
+    </>
   );
 }

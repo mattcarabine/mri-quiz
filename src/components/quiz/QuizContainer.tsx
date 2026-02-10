@@ -1,10 +1,12 @@
 import { useEffect } from 'react';
 import { useQuiz } from '../../hooks/useQuiz';
 import { useImagePreloader } from '../../hooks/useImagePreloader';
+import { useViewport } from '../../hooks/useViewport';
+import { useScrollVisibility } from '../../hooks/useScrollVisibility';
 import { SessionSelector } from './SessionSelector';
 import { ImageDisplay } from './ImageDisplay';
 import { AnswerButtons } from './AnswerButtons';
-import { ProgressBar } from './ProgressBar';
+import { QuizHeader } from './QuizHeader';
 import { Explanation } from './Explanation';
 import { ResultsScreen } from './ResultsScreen';
 import type { QuizImage } from '../../types/quiz';
@@ -29,7 +31,29 @@ function getImageUrl(image: QuizImage): string {
   return `/images/${image.type.toLowerCase()}/${image.filename}`;
 }
 
-function QuitButton({ onClick }: { onClick: () => void }) {
+function QuitButton({ onClick, isFixed = false }: { onClick: () => void; isFixed?: boolean }) {
+  if (isFixed) {
+    return (
+      <button
+        onClick={onClick}
+        className="fixed top-4 right-4 z-50 p-3 rounded-lg
+                   text-gray-400 hover:text-gray-100
+                   bg-gray-900/80 hover:bg-gray-800/90
+                   backdrop-blur-sm shadow-elevated
+                   transition-all"
+        style={{
+          top: 'calc(1rem + env(safe-area-inset-top, 0px))',
+        }}
+        aria-label="End quiz"
+        title="End quiz"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5">
+          <path d="M6.28 5.22a.75.75 0 0 0-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 1 0 1.06 1.06L10 11.06l3.72 3.72a.75.75 0 1 0 1.06-1.06L11.06 10l3.72-3.72a.75.75 0 0 0-1.06-1.06L10 8.94 6.28 5.22Z" />
+        </svg>
+      </button>
+    );
+  }
+
   return (
     <button
       onClick={onClick}
@@ -44,27 +68,20 @@ function QuitButton({ onClick }: { onClick: () => void }) {
   );
 }
 
-function QuizHeader({ current, total, score, onQuit }: {
-  current: number;
-  total: number;
-  score: number;
-  onQuit: () => void;
-}) {
-  return (
-    <div className="flex items-start gap-4">
-      <div className="flex-1 min-w-0">
-        <ProgressBar current={current} total={total} score={score} />
-      </div>
-      <QuitButton onClick={onQuit} />
-    </div>
-  );
-}
-
 export function QuizContainer() {
   const { state, startQuiz, submitAnswer, nextQuestion, resetQuiz, currentImage, metadata } = useQuiz();
+  const { isTablet } = useViewport();
+  const isProgressVisible = useScrollVisibility(isTablet && (state.phase === 'question' || state.phase === 'explanation'));
 
   // Preload next 2-3 images for smooth UX
   useImagePreloader(state.items, state.currentIndex);
+
+  // Reset scroll position on phase changes (tablet only)
+  useEffect(() => {
+    if (isTablet && (state.phase === 'question' || state.phase === 'explanation')) {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  }, [state.phase, state.currentIndex, isTablet]);
 
   // Keyboard shortcuts
   useEffect(() => {
@@ -119,14 +136,51 @@ export function QuizContainer() {
       return <ErrorState message="Error: No current image available" onReset={resetQuiz} />;
     }
 
+    const handleScrollToTop = () => {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
+
+    if (isTablet) {
+      return (
+        <>
+          <QuitButton onClick={resetQuiz} isFixed />
+          <QuizHeader
+            current={state.totalAnswered + 1}
+            total={sessionLength}
+            score={state.score}
+            isTablet
+            isVisible={isProgressVisible}
+            showIndicator={!isProgressVisible}
+            onScrollToTop={handleScrollToTop}
+          />
+          <div className="w-full max-w-4xl mx-auto px-4 pb-32">
+            <ImageDisplay
+              src={getImageUrl(currentImage)}
+              alt={`MRI scan ${currentImage.id}`}
+              loading={false}
+            />
+          </div>
+          <AnswerButtons
+            onAnswer={submitAnswer}
+            disabled={false}
+            isFixed
+          />
+        </>
+      );
+    }
+
     return (
       <div className="w-full max-w-4xl mx-auto space-y-6">
-        <QuizHeader
-          current={state.totalAnswered + 1}
-          total={sessionLength}
-          score={state.score}
-          onQuit={resetQuiz}
-        />
+        <div className="flex items-start gap-4">
+          <div className="flex-1 min-w-0">
+            <QuizHeader
+              current={state.totalAnswered + 1}
+              total={sessionLength}
+              score={state.score}
+            />
+          </div>
+          <QuitButton onClick={resetQuiz} />
+        </div>
         <ImageDisplay
           src={getImageUrl(currentImage)}
           alt={`MRI scan ${currentImage.id}`}
@@ -150,14 +204,53 @@ export function QuizContainer() {
       return <ErrorState message="Error: No answer record found" />;
     }
 
+    const handleScrollToTop = () => {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
+
+    if (isTablet) {
+      return (
+        <>
+          <QuitButton onClick={resetQuiz} isFixed />
+          <QuizHeader
+            current={state.totalAnswered}
+            total={sessionLength}
+            score={state.score}
+            isTablet
+            isVisible={isProgressVisible}
+            showIndicator={!isProgressVisible}
+            onScrollToTop={handleScrollToTop}
+          />
+          <div className="w-full max-w-4xl mx-auto px-4">
+            <ImageDisplay
+              src={getImageUrl(currentImage)}
+              alt={`MRI scan ${currentImage.id}`}
+              loading={false}
+            />
+            <Explanation
+              type={currentImage.type}
+              correct={lastAnswer.correct}
+              userAnswer={lastAnswer.userAnswer}
+              onContinue={nextQuestion}
+              isTablet
+            />
+          </div>
+        </>
+      );
+    }
+
     return (
       <div className="w-full max-w-4xl mx-auto space-y-6">
-        <QuizHeader
-          current={state.totalAnswered}
-          total={sessionLength}
-          score={state.score}
-          onQuit={resetQuiz}
-        />
+        <div className="flex items-start gap-4">
+          <div className="flex-1 min-w-0">
+            <QuizHeader
+              current={state.totalAnswered}
+              total={sessionLength}
+              score={state.score}
+            />
+          </div>
+          <QuitButton onClick={resetQuiz} />
+        </div>
         <ImageDisplay
           src={getImageUrl(currentImage)}
           alt={`MRI scan ${currentImage.id}`}
